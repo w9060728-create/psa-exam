@@ -10,8 +10,12 @@
         body { font-family: 'Inter', 'Noto Sans TC', sans-serif; background-color: #f8fafc; color: #1e293b; }
         .glass-card { background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(10px); }
         .opt-btn { transition: all 0.2s ease; border: 2px solid #e2e8f0; }
+        
+        /* 答題即時反饋樣式 */
         .opt-correct { background-color: #dcfce7 !important; border-color: #22c55e !important; color: #166534 !important; font-weight: 700; }
         .opt-wrong { background-color: #fee2e2 !important; border-color: #ef4444 !important; color: #991b1b !important; }
+        .opt-highlight { border-color: #22c55e !important; box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.2) !important; }
+        
         #confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 100; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade { animation: fadeIn 0.4s ease-out forwards; }
@@ -19,11 +23,12 @@
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
 
+    <!-- 成功提交時的紙花特效 -->
     <canvas id="confetti-canvas"></canvas>
 
-    <div id="app" class="w-full max-w-lg">
+    <div id="app" class="w-full max-w-lg relative">
         
-        <!-- 登入畫面 (包含經銷商欄位) -->
+        <!-- 登入畫面 -->
         <div id="login-screen" class="glass-card rounded-3xl shadow-2xl p-8 border border-slate-200">
             <div class="text-center mb-8">
                 <div class="inline-block p-4 bg-blue-600 rounded-2xl mb-4 shadow-lg rotate-3">
@@ -34,11 +39,13 @@
             </div>
             
             <div class="space-y-5">
+                <!-- 經銷商欄位 -->
                 <div>
                     <label class="block text-xs font-bold text-slate-400 mb-1 ml-1 uppercase tracking-widest">經銷商名稱</label>
-                    <input type="text" id="user-dealer" placeholder="例如：荃程 / 星聯" 
+                    <input type="text" id="user-dealer" placeholder="例如：台北濱江 / 彰化金馬" 
                            class="w-full p-4 rounded-xl border-2 border-slate-100 focus:border-blue-500 outline-none text-lg font-medium transition-all">
                 </div>
+                <!-- 姓名欄位 -->
                 <div>
                     <label class="block text-xs font-bold text-slate-400 mb-1 ml-1 uppercase tracking-widest">技師姓名</label>
                     <input type="text" id="user-name" placeholder="請輸入姓名全名" 
@@ -49,26 +56,40 @@
             <button onclick="startApp()" class="w-full mt-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg transition-transform active:scale-95">
                 開始進入評核
             </button>
+            <p class="text-center text-xs text-slate-400 mt-4">⚠️ 測驗限時 30 分鐘，中途離開將視為 0 分</p>
         </div>
 
         <!-- 測驗內容區 -->
         <div id="quiz-screen" class="hidden glass-card rounded-3xl shadow-2xl overflow-hidden border border-slate-200 animate-fade">
+            <!-- 進度條 -->
             <div class="h-2 w-full bg-slate-100">
                 <div id="progress-bar" class="h-full bg-blue-500 transition-all duration-500" style="width: 0%"></div>
             </div>
+            
             <div class="p-8">
+                <!-- 頂部資訊列 (計時器與姓名) -->
                 <div class="flex justify-between items-center mb-6">
                     <span id="q-count" class="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full"></span>
-                    <span id="name-tag" class="text-[10px] text-slate-400 font-bold uppercase"></span>
+                    <span id="name-tag" class="text-[10px] text-slate-400 font-bold uppercase max-w-[120px] truncate"></span>
                 </div>
+                
+                <!-- 計時器顯示 -->
+                <div id="timer-display" class="mb-6 py-2 px-4 bg-slate-100 rounded-xl text-center font-mono text-xl font-bold text-slate-700 border-2 border-slate-200 transition-colors">
+                    ⏱️ 30:00
+                </div>
+
+                <!-- 題目文字 -->
                 <h2 id="q-text" class="text-lg font-bold text-slate-800 mb-8 leading-relaxed"></h2>
                 
+                <!-- 選項區塊 -->
                 <div id="options-box" class="space-y-3"></div>
                 
+                <!-- 即時回饋提示框 -->
                 <div id="feedback-hint" class="mt-6 hidden animate-fade">
                     <div id="hint-box" class="p-4 rounded-xl text-sm font-bold flex items-center gap-2"></div>
                 </div>
                 
+                <!-- 下一題按鈕 -->
                 <button id="next-btn" onclick="goToNext()" disabled 
                         class="mt-10 w-full py-4 bg-slate-200 text-slate-400 font-bold rounded-xl cursor-not-allowed transition-all">
                     請選取答案
@@ -80,40 +101,39 @@
         <div id="result-screen" class="hidden glass-card rounded-3xl shadow-2xl p-10 text-center border border-slate-200 animate-fade">
             <div id="loading-state" class="py-12">
                 <div class="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent mx-auto"></div>
-                <p class="mt-4 text-slate-500 font-medium">數據存檔同步中...</p>
+                <p class="mt-4 text-slate-500 font-medium">數據加密同步至後台...</p>
             </div>
             
             <div id="score-display" class="hidden">
                 <div class="mb-4 inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full text-green-600 font-bold text-2xl">✓</div>
-                <h2 class="text-xl font-bold text-slate-800 mb-2">評核完成</h2>
+                <h2 class="text-xl font-bold text-slate-800 mb-2" id="result-title">評核完成</h2>
+                <p id="timeout-msg" class="text-red-500 text-sm font-bold mb-2 hidden">⚠️ 時間到，已自動強制交卷</p>
                 <div class="text-7xl font-black text-blue-600 italic mb-8" id="final-score">0</div>
                 
                 <div class="bg-slate-50 rounded-2xl p-5 mb-8 text-left border border-slate-100">
                     <div class="flex justify-between items-center mb-3 border-b border-slate-200 pb-2">
-                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">應試者資訊</span>
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">應試者雲端報告</span>
                         <span class="text-[10px] bg-green-500 text-white px-2 py-0.5 rounded">已存檔</span>
                     </div>
                     <div class="space-y-2 text-sm text-slate-600 pt-2 font-medium">
-                        <p>經銷商：<span id="summary-dealer" class="text-slate-900"></span></p>
-                        <p>技師姓名：<span id="summary-name" class="text-slate-900"></span></p>
-                        <p>最終得分：<span id="summary-score" class="text-blue-600 font-bold"></span></p>
+                        <p>單位：<span id="summary-dealer" class="text-slate-900"></span></p>
+                        <p>姓名：<span id="summary-name" class="text-slate-900"></span></p>
+                        <p>得分：<span id="summary-score" class="text-blue-600 font-bold text-lg"></span></p>
+                        <p class="text-xs text-slate-400 mt-2">答題詳情已隱藏並傳送至管理後台</p>
                     </div>
                 </div>
-
-                <button onclick="location.reload()" class="w-full py-4 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-900 transition-colors shadow-lg">
-                    重新開始測驗
-                </button>
             </div>
         </div>
     </div>
 
     <script>
+        // Google Forms 提交參數配置 (已更新為最新網址的 ID)
         const CONFIG = {
             formID: "1FAIpQLSftyWqZ8Q8tkYGA6bQeSnP2nxZldQoPt2gH7mSXczpfnNloaA",
             dealerEntry: "entry.1741632433",
             nameEntry: "entry.1735160920",
             scoreEntry: "entry.609819735",
-            detailEntry: "entry.1154807191" 
+            detailEntry: "entry.1154807191"
         };
 
         const quizData = [
@@ -145,21 +165,94 @@
             userName: "",
             userDealer: "",
             isAnswering: true,
-            logs: []
+            userRecords: [],
+            timeLeft: 1800, // 30分鐘 = 1800秒
+            timerInterval: null
         };
 
+        // 防作弊機制：關閉網頁攔截
+        window.addEventListener('beforeunload', function (e) {
+            if (state.userName !== "" && state.index < quizData.length && state.timerInterval !== null) {
+                e.preventDefault();
+                e.returnValue = '測驗尚未完成，現在離開將不會儲存您的進度！';
+            }
+        });
+
+        // 登入並開始測驗
         function startApp() {
             const dealer = document.getElementById('user-dealer').value.trim();
             const name = document.getElementById('user-name').value.trim();
-            if (!dealer || !name) return alert("請輸入經銷商與姓名以開始");
+            if (!dealer || !name) return alert("請輸入經銷商名稱與技師姓名以開始測驗");
             
             state.userDealer = dealer;
             state.userName = name;
             
+            // 防作弊：登入時先向 Google 表單發送一筆「中途退出/未交卷」的紀錄
+            sendAntiCheatRecord();
+
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('quiz-screen').classList.remove('hidden');
             document.getElementById('name-tag').innerText = `${dealer} / ${name}`;
+            
+            startTimer();
             renderQuestion();
+        }
+
+        // 發送初始的警告紀錄 (若中途關閉視窗，後台會留存此紀錄)
+        function sendAntiCheatRecord() {
+            const postUrl = `https://docs.google.com/forms/d/e/${CONFIG.formID}/formResponse`;
+            const params = new URLSearchParams();
+            params.append(CONFIG.dealerEntry, state.userDealer);
+            params.append(CONFIG.nameEntry, state.userName);
+            params.append(CONFIG.scoreEntry, "0"); // 暫記 0 分
+            params.append(CONFIG.detailEntry, "【警告】該技師已進入測驗，但中途關閉網頁未交卷或逾時作廢。");
+
+            fetch(postUrl, { method: 'POST', mode: 'no-cors', body: params.toString() });
+        }
+
+        // 計時器邏輯
+        function startTimer() {
+            updateTimerDisplay();
+            state.timerInterval = setInterval(() => {
+                state.timeLeft--;
+                updateTimerDisplay();
+
+                if (state.timeLeft <= 0) {
+                    clearInterval(state.timerInterval);
+                    autoSubmitTimeout();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const timerDiv = document.getElementById('timer-display');
+            const minutes = Math.floor(state.timeLeft / 60);
+            const seconds = state.timeLeft % 60;
+            const timeString = `⏱️ ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            timerDiv.innerText = timeString;
+
+            // 剩下 5 分鐘以內 (300秒) 變為紅色警告閃爍
+            if (state.timeLeft <= 300 && state.timeLeft > 0) {
+                timerDiv.classList.add('bg-red-100', 'text-red-600', 'border-red-300', 'animate-pulse');
+                timerDiv.classList.remove('bg-slate-100', 'text-slate-700', 'border-slate-200');
+            }
+        }
+
+        // 時間到強制交卷邏輯
+        function autoSubmitTimeout() {
+            state.isAnswering = false; // 停止答題
+            
+            // 把尚未作答的題目全部標記為 [未答]
+            for (let i = state.index; i < quizData.length; i++) {
+                const q = quizData[i];
+                state.userRecords.push(`Q${i + 1}:[未答] 技師選:未答 / 正確解:${q.a[q.c]}`);
+            }
+
+            // 標示 UI 顯示逾時訊息
+            document.getElementById('timeout-msg').classList.remove('hidden');
+            document.getElementById('result-title').innerText = "測驗已強制結束";
+            
+            finalize();
         }
 
         function renderQuestion() {
@@ -168,59 +261,78 @@
             document.getElementById('q-count').innerText = `題目 ${state.index + 1} / ${quizData.length}`;
             document.getElementById('q-text').innerText = q.q;
             document.getElementById('progress-bar').style.width = `${((state.index) / quizData.length) * 100}%`;
+            
             document.getElementById('feedback-hint').classList.add('hidden');
-            document.getElementById('next-btn').disabled = true;
-            document.getElementById('next-btn').className = "mt-10 w-full py-4 bg-slate-200 text-slate-400 font-bold rounded-xl cursor-not-allowed";
+            const nextBtn = document.getElementById('next-btn');
+            nextBtn.disabled = true;
+            nextBtn.className = "mt-10 w-full py-4 bg-slate-200 text-slate-400 font-bold rounded-xl cursor-not-allowed transition-all";
+            nextBtn.innerText = "請選取答案";
 
             const box = document.getElementById('options-box');
             box.innerHTML = '';
+            
             q.a.forEach((opt, i) => {
                 const b = document.createElement('button');
-                b.className = "opt-btn w-full text-left p-4 rounded-xl font-medium text-slate-700 animate-fade";
-                b.innerHTML = `<span class="inline-block w-6 h-6 border-2 border-slate-200 rounded-full mr-3 text-center text-[10px] leading-5">${String.fromCharCode(65+i)}</span> ${opt}`;
+                b.className = "opt-btn w-full text-left p-4 rounded-xl font-medium text-slate-700 animate-fade flex items-center bg-white hover:bg-slate-50";
+                b.innerHTML = `<span class="flex-shrink-0 inline-block w-6 h-6 border-2 border-slate-300 rounded-full mr-3 text-center text-[10px] leading-5 font-bold text-slate-500">${String.fromCharCode(65+i)}</span> <span>${opt}</span>`;
                 b.onclick = () => handleSelection(i, b);
                 box.appendChild(b);
             });
         }
 
-        function handleSelection(idx, element) {
+        function handleSelection(selectedIdx, element) {
             if (!state.isAnswering) return;
-            state.isAnswering = false;
+            state.isAnswering = false; // 鎖定點擊
 
             const q = quizData[state.index];
-            const isCorrect = idx === q.c;
-            const techSelectionText = q.a[idx];
+            const isCorrect = selectedIdx === q.c;
+            const techSelectionText = q.a[selectedIdx];
             const correctText = q.a[q.c];
 
-            state.logs.push(`Q${state.index + 1}:[${isCorrect ? "對" : "錯"}] 選:${techSelectionText}`);
+            // 紀錄詳細字串放入陣列
+            const recordStr = `Q${state.index + 1}:[${isCorrect ? "對" : "錯"}] 技師選:${techSelectionText} / 正確解:${correctText}`;
+            state.userRecords.push(recordStr);
+
             if (isCorrect) state.score += 5;
 
+            // 即時 UI 回饋：改變選項顏色
             const buttons = document.querySelectorAll('.opt-btn');
             buttons.forEach((btn, i) => {
+                const iconSpan = btn.querySelector('span');
                 if (i === q.c) {
+                    // 正確答案變綠色
                     btn.classList.add('opt-correct');
-                } else if (i === idx && !isCorrect) {
+                    iconSpan.innerHTML = "✓";
+                    iconSpan.className = "flex-shrink-0 inline-block w-6 h-6 border-2 border-green-500 bg-green-500 rounded-full mr-3 text-center text-[10px] leading-5 font-bold text-white";
+                    if (!isCorrect) btn.classList.add('opt-highlight'); // 若技師答錯，高亮正確答案
+                } else if (i === selectedIdx && !isCorrect) {
+                    // 技師選錯的答案變紅色
                     btn.classList.add('opt-wrong');
+                    iconSpan.innerHTML = "✗";
+                    iconSpan.className = "flex-shrink-0 inline-block w-6 h-6 border-2 border-red-500 bg-red-500 rounded-full mr-3 text-center text-[10px] leading-5 font-bold text-white";
                 } else {
-                    btn.style.opacity = "0.5";
+                    btn.style.opacity = "0.4"; // 其他淡化
                 }
             });
 
+            // 顯示底部提示訊息
             const hintBox = document.getElementById('hint-box');
             const hintContainer = document.getElementById('feedback-hint');
             hintContainer.classList.remove('hidden');
+            
             if (isCorrect) {
-                hintBox.className = "p-4 rounded-xl text-sm font-bold bg-green-50 text-green-700 border border-green-200";
-                hintBox.innerHTML = `<span>✔</span> 答對了！`;
+                hintBox.className = "p-4 rounded-xl text-sm font-bold bg-green-50 text-green-700 border border-green-200 w-full";
+                hintBox.innerHTML = `<span class="text-lg">✅</span> 答對了！繼續保持`;
             } else {
-                hintBox.className = "p-4 rounded-xl text-sm font-bold bg-red-50 text-red-700 border border-red-200";
-                hintBox.innerHTML = `<span>⚠</span> 正確答案：${correctText}`;
+                hintBox.className = "p-4 rounded-xl text-sm font-bold bg-red-50 text-red-700 border border-red-200 w-full";
+                hintBox.innerHTML = `<span class="text-lg">❌</span> 正確答案應為：<br><span class="text-slate-800 font-extrabold mt-1 block">${correctText}</span>`;
             }
 
+            // 開放下一題按鈕
             const nextBtn = document.getElementById('next-btn');
             nextBtn.disabled = false;
-            nextBtn.className = "mt-10 w-full py-4 bg-blue-600 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all";
-            nextBtn.innerText = (state.index === quizData.length - 1) ? "查看評核結果" : "進入下一題";
+            nextBtn.className = "mt-10 w-full py-4 bg-blue-600 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all hover:bg-blue-700";
+            nextBtn.innerText = (state.index === quizData.length - 1) ? "提交並查看成績" : "進入下一題";
         }
 
         function goToNext() {
@@ -233,30 +345,45 @@
         }
 
         function finalize() {
+            // 停止計時器與解除防作弊攔截
+            clearInterval(state.timerInterval);
+            state.timerInterval = null;
+            window.onbeforeunload = null; 
+
             document.getElementById('quiz-screen').classList.add('hidden');
             document.getElementById('result-screen').classList.remove('hidden');
             
+            // 將紀錄陣列轉換為以 | 分隔的字串
+            const finalDetailStr = state.userRecords.join(" | ");
+
             const postUrl = `https://docs.google.com/forms/d/e/${CONFIG.formID}/formResponse`;
             const params = new URLSearchParams();
             params.append(CONFIG.dealerEntry, state.userDealer);
             params.append(CONFIG.nameEntry, state.userName);
             params.append(CONFIG.scoreEntry, state.score);
-            params.append(CONFIG.detailEntry, state.logs.join(" | ")); 
+            params.append(CONFIG.detailEntry, finalDetailStr); 
 
+            // 發送最終真實成績覆蓋初始的 0 分紀錄
             fetch(postUrl, {
-                method: 'POST', mode: 'no-cors',
+                method: 'POST',
+                mode: 'no-cors',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: params.toString()
             }).then(() => {
                 setTimeout(() => {
                     document.getElementById('loading-state').classList.add('hidden');
                     document.getElementById('score-display').classList.remove('hidden');
+                    
                     document.getElementById('final-score').innerText = state.score;
                     document.getElementById('summary-dealer').innerText = state.userDealer;
                     document.getElementById('summary-name').innerText = state.userName;
                     document.getElementById('summary-score').innerText = state.score + " 分";
+                    
                     if (state.score >= 60) triggerConfetti();
-                }, 1200);
+                }, 1500);
+            }).catch(err => {
+                console.error("提交錯誤", err);
+                alert("成績上傳可能有誤，請截圖本畫面回報主管。您的分數：" + state.score);
             });
         }
 
@@ -265,25 +392,28 @@
             const ctx = canvas.getContext('2d');
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            let particles = Array.from({ length: 80 }).map(() => ({
+            let particles = Array.from({ length: 100 }).map(() => ({
                 x: Math.random() * canvas.width,
                 y: Math.random() * canvas.height - canvas.height,
                 w: Math.random() * 8 + 4,
                 h: Math.random() * 8 + 4,
-                color: `hsl(${Math.random() * 360}, 70%, 50%)`,
-                speed: Math.random() * 3 + 4,
+                color: `hsl(${Math.random() * 360}, 80%, 50%)`,
+                speed: Math.random() * 3 + 3,
                 r: Math.random() * 360
             }));
             function render() {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 particles.forEach(p => {
-                    p.y += p.speed; p.r += 2;
+                    p.y += p.speed; 
+                    p.r += 2;
                     ctx.save();
-                    ctx.translate(p.x, p.y); ctx.rotate(p.r * Math.PI / 180);
-                    ctx.fillStyle = p.color; ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+                    ctx.translate(p.x, p.y); 
+                    ctx.rotate(p.r * Math.PI / 180);
+                    ctx.fillStyle = p.color; 
+                    ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
                     ctx.restore();
                 });
-                if (particles.length > 0 && particles[0].y < canvas.height * 2) requestAnimationFrame(render);
+                if (particles[0].y < canvas.height * 2) requestAnimationFrame(render);
             }
             render();
         }
