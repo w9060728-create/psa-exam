@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DIAGBOX 專業技術測驗 - 自動紀錄系統</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body { font-family: 'Inter', 'Microsoft JhengHei', sans-serif; background-color: #f1f5f9; }
+        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+        .option-btn { transition: all 0.2s ease; }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div id="app" class="w-full max-w-xl">
+        
+        <!-- 第一步：輸入姓名 -->
+        <div id="login-screen" class="glass rounded-3xl shadow-xl p-8 text-center animate-fade-in">
+            <div class="mb-6 inline-flex p-4 rounded-full bg-blue-50 text-blue-600">
+                <div class="w-12 h-12 flex items-center justify-center font-bold text-2xl border-4 border-blue-600 rounded-lg">DBX</div>
+            </div>
+            <h1 class="text-2xl font-bold text-slate-900 mb-2">DIAGBOX 技術測驗</h1>
+            <p class="text-slate-500 mb-8">請輸入您的姓名以開始測驗</p>
+            
+            <input type="text" id="user-name" placeholder="請輸入真實姓名" 
+                   class="w-full p-4 mb-6 rounded-2xl border-2 border-slate-200 focus:border-blue-500 outline-none transition text-center text-lg">
+            
+            <button onclick="startQuiz()" class="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl shadow-lg transition-all active:scale-95">
+                開始作答
+            </button>
+        </div>
+
+        <!-- 第二步：測驗中 -->
+        <div id="quiz-screen" class="hidden glass rounded-3xl shadow-xl overflow-hidden">
+            <div class="h-2 w-full bg-slate-100">
+                <div id="progress-bar" class="h-full bg-blue-500 transition-all duration-300 w-0"></div>
+            </div>
+            <div class="p-8">
+                <div class="flex justify-between items-center mb-6">
+                    <span id="question-index" class="text-sm font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">第 1 題</span>
+                    <span id="current-user" class="text-sm text-slate-400 font-medium"></span>
+                </div>
+                <h2 id="question-text" class="text-xl font-bold text-slate-800 mb-8 leading-snug">載入中...</h2>
+                <div id="options-box" class="space-y-3"></div>
+                <button id="next-btn" onclick="nextQuestion()" disabled class="mt-10 w-full py-4 bg-slate-200 text-slate-400 font-bold rounded-2xl cursor-not-allowed">
+                    請選擇答案
+                </button>
+            </div>
+        </div>
+
+        <!-- 第三步：結果與傳送中 -->
+        <div id="result-screen" class="hidden glass rounded-3xl shadow-xl p-10 text-center">
+            <div id="loading-spinner" class="py-12">
+                <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto"></div>
+                <p class="mt-4 text-slate-500">正在同步成績至雲端...</p>
+            </div>
+            <div id="final-content" class="hidden">
+                <h2 class="text-2xl font-bold text-slate-900 mb-2">測驗完成</h2>
+                <div class="py-8">
+                    <div id="score-text" class="text-7xl font-black text-blue-600 mb-2">0</div>
+                    <p class="text-slate-500">分 / 滿分 100</p>
+                </div>
+                <div id="feedback" class="p-6 rounded-2xl mb-8 bg-blue-50 text-blue-700 text-sm">
+                    成績已成功上傳。
+                </div>
+                <button onclick="location.reload()" class="w-full py-4 bg-slate-900 text-white font-bold rounded-2xl">
+                    結束測驗
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 這邊已經填入您剛剛提供的 Google 表單資訊
+        const CONFIG = {
+            formID: "1FAIpQLSftyWqZ8Q8tkYGA6bQeSnP2nxZldQoPt2gH7mSXczpfnNloaA",
+            nameEntryID: "entry.1735160920",
+            scoreEntryID: "entry.609819735"
+        };
+
+        const questions = [
+            { q: "Stellantis 提供哪種方案包含加固電腦、PSA XS E 診斷接頭且有四年保固？", a: ["DIAGBOX One", "DIAGBOX Liberty", "DIAGBOX Premium", "DIAGBOX Token"], c: 2 },
+            { q: "獨立維修廠 (Independent repairers) 的授權運作方式為何？", a: ["永久免費授權", "每月固定月費制", "購買代幣，每品牌有效期限為一週", "購買代幣，每品牌有效期限為一年"], c: 2 },
+            { q: "哪個品牌特別標註僅適用於「2018 年以後上市」的車型？", a: ["Citroën", "Peugeot", "DS Automobiles", "Opel / Vauxhall"], c: 3 },
+            { q: "在入口網站若要隱藏不常出現的車型以節省搜尋時間，應點擊？", a: ["Configuration du portail", "Menu Diagnostic", "Gestion Flash", "Aide"], c: 0 },
+            { q: "若要顯示所有「被隱藏」的車型，應點擊入口網站的哪個按鈕？", a: ["Refresh", "Help", "...", "Home"], c: 2 },
+            { q: "執行新車準備 (PVN) 或加裝附件 (如倒車顯影)，應選擇哪個選單？", a: ["Repair", "Fault finding", "Customer delivery", "Servicing"], c: 2 },
+            { q: "在「Repair」選單中，若 ECU 未被自動識別，畫面上會顯示？", a: ["calculateur inconnu", "Connection Error", "Code 404", "System Busy"], c: 0 },
+            { q: "關於「手動配置」，下列敘述何者正確？", a: ["可直接進入", "僅限離線使用", "自動配置執行過後才能存取", "僅適用於舊款車型"], c: 2 },
+            { q: "在 Download 選單中若顯示「ECU updated」，代表什麼？", a: ["ECU 損壞", "電池電壓不足", "ECU 版本比伺服器上的更新", "網路中斷"], c: 2 },
+            { q: "更換零件 (如 ECU) 時，應優先使用哪一個子選單？", a: ["Identification", "Fault Reading", "Repair pack", "Actuator Test"], c: 2 },
+            { q: "Fault finding 開始前，驗證圖示 (Authentication icon) 應為何種顏色？", a: ["紅色", "黃色", "藍色", "綠色"], c: 3 },
+            { q: "下列哪項操作屬於「Servicing (保養)」選單的操作範疇？", a: ["加裝警報器", "添加柴油添加劑 (DPF)", "更改輪胎規格", "新車交車檢查"], c: 1 },
+            { q: "2015 年以後新發佈的 TSB (技術通報) 應在哪裡搜尋？", a: ["DIAGBOX 內建標籤", "實體紙本手冊", "Service Box 網頁", "手機簡訊通報"], c: 2 },
+            { q: "關於 TSB 的使用規範，下列敘述何者「錯誤」？", a: ["查閱 TSB 是強制性步驟", "禁止列印 TSB 文件", "可將 TSB 用於不同車身號碼之車輛", "禁止外流資訊"], c: 2 },
+            { q: "建立 DID-A 之前，技師「必須」先執行？", a: ["重灌 DIAGBOX", "查閱 ISolve 確認有無方案", "更換 VCI 接頭", "直接致電技術部"], c: 1 },
+            { q: "準備 DID-A 時，關於診斷畫面截圖的正確做法是？", a: ["用手機拍照", "用數位相機拍照", "使用 DIAGBOX 內建截圖功能", "不需提供畫面"], c: 2 },
+            { q: "針對「同一個」未解決的問題，應如何發送 DID-A 以獲得優先處理？", a: ["建立大量新檔案", "開啟「補充 (Supplement)」案件", "改寄電子郵件", "透過傳真申請"], c: 1 },
+            { q: "若遇到「診斷工具啟用/註冊」問題，求助管道為何？", a: ["DIAGBOX 內的 Report 標籤", "透過 Service Box 請求協助", "ISolve 系統", "重新開機即可"], c: 1 },
+            { q: "為維持工具最佳效能，技師在「每天結束工作時」應？", a: ["保持待機", "關閉電腦電源", "持續充電", "保持螢幕常亮"], c: 1 },
+            { q: "診斷電腦對於「第三方軟體」的安裝規範為何？", a: ["可以自由安裝", "僅能安裝 Stellantis 核准的軟體", "只要不影響效能即可安裝", "無任何限制"], c: 1 }
+        ];
+
+        let currentIdx = 0;
+        let score = 0;
+        let userName = "";
+        let selectedIdx = null;
+
+        function startQuiz() {
+            userName = document.getElementById('user-name').value.trim();
+            if (!userName) { alert("請輸入姓名"); return; }
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('quiz-screen').classList.remove('hidden');
+            document.getElementById('current-user').innerText = `技師: ${userName}`;
+            renderQuestion();
+        }
+
+        function renderQuestion() {
+            const data = questions[currentIdx];
+            document.getElementById('question-index').innerText = `第 ${currentIdx + 1} / ${questions.length} 題`;
+            document.getElementById('question-text').innerText = data.q;
+            document.getElementById('progress-bar').style.width = `${(currentIdx / questions.length) * 100}%`;
+
+            const box = document.getElementById('options-box');
+            box.innerHTML = '';
+            data.a.forEach((opt, i) => {
+                const btn = document.createElement('button');
+                btn.className = "option-btn w-full text-left p-4 rounded-2xl border-2 border-slate-100 hover:bg-blue-50 hover:border-blue-200 font-medium";
+                btn.innerText = opt;
+                btn.onclick = () => selectOption(i, btn);
+                box.appendChild(btn);
+            });
+
+            const nextBtn = document.getElementById('next-btn');
+            nextBtn.disabled = true;
+            nextBtn.className = "mt-10 w-full py-4 bg-slate-100 text-slate-400 font-bold rounded-2xl cursor-not-allowed";
+        }
+
+        function selectOption(idx, el) {
+            selectedIdx = idx;
+            document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('border-blue-500', 'bg-blue-50'));
+            el.classList.add('border-blue-500', 'bg-blue-50');
+            const nextBtn = document.getElementById('next-btn');
+            nextBtn.disabled = false;
+            nextBtn.className = "mt-10 w-full py-4 bg-blue-600 text-white font-bold rounded-2xl shadow-lg";
+            nextBtn.innerText = (currentIdx === questions.length - 1) ? "提交考卷" : "下一題";
+        }
+
+        function nextQuestion() {
+            if (selectedIdx === questions[currentIdx].c) score += 5;
+            currentIdx++;
+            if (currentIdx < questions.length) {
+                selectedIdx = null;
+                renderQuestion();
+            } else {
+                submitToGoogle();
+            }
+        }
+
+        function submitToGoogle() {
+            document.getElementById('quiz-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.remove('hidden');
+
+            const postUrl = `https://docs.google.com/forms/d/e/${CONFIG.formID}/formResponse`;
+            const formData = new FormData();
+            formData.append(CONFIG.nameEntryID, userName);
+            formData.append(CONFIG.scoreEntryID, score);
+
+            fetch(postUrl, { method: 'POST', mode: 'no-cors', body: formData })
+                .then(() => {
+                    setTimeout(() => {
+                        document.getElementById('loading-spinner').classList.add('hidden');
+                        document.getElementById('final-content').classList.remove('hidden');
+                        document.getElementById('score-text').innerText = score;
+                    }, 1500);
+                })
+                .catch(() => alert("傳送失敗，請檢查網路。"));
+        }
+    </script>
+</body>
+</html>
