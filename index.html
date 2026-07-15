@@ -9,13 +9,9 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Noto+Sans+TC:wght@400;700&display=swap');
         body { font-family: 'Inter', 'Noto Sans TC', sans-serif; background-color: #f8fafc; color: #1e293b; }
         .glass-card { background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(10px); }
-        
-        /* 即時回饋樣式 */
         .opt-btn { transition: all 0.2s ease; border: 2px solid #e2e8f0; }
         .opt-correct { background-color: #dcfce7 !important; border-color: #22c55e !important; color: #166534 !important; font-weight: 700; }
         .opt-wrong { background-color: #fee2e2 !important; border-color: #ef4444 !important; color: #991b1b !important; }
-        .opt-highlight { border-color: #22c55e !important; border-style: dashed !important; background-color: #f0fdf4; }
-        
         #confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 100; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade { animation: fadeIn 0.4s ease-out forwards; }
@@ -27,26 +23,26 @@
 
     <div id="app" class="w-full max-w-lg">
         
-        <!-- 登入畫面 -->
+        <!-- 登入畫面 (包含經銷商欄位) -->
         <div id="login-screen" class="glass-card rounded-3xl shadow-2xl p-8 border border-slate-200">
             <div class="text-center mb-8">
                 <div class="inline-block p-4 bg-blue-600 rounded-2xl mb-4 shadow-lg rotate-3">
                     <span class="text-white font-black text-2xl">DBX</span>
                 </div>
                 <h1 class="text-2xl font-bold text-slate-800">技術部專業評核</h1>
-                <p class="text-slate-500 text-sm mt-2">請輸入您的基本資訊以開始測驗</p>
+                <p class="text-slate-500 text-sm mt-2">請輸入您的單位資訊以進行測驗</p>
             </div>
             
-            <div class="space-y-4">
+            <div class="space-y-5">
                 <div>
-                    <label class="block text-xs font-bold text-slate-400 mb-1 ml-1 uppercase">經銷商名稱</label>
-                    <input type="text" id="user-dealer" placeholder="例如：台北濱江 / 台中復興" 
-                           class="w-full p-4 rounded-xl border-2 border-slate-100 focus:border-blue-500 outline-none text-lg font-medium">
+                    <label class="block text-xs font-bold text-slate-400 mb-1 ml-1 uppercase tracking-widest">經銷商名稱</label>
+                    <input type="text" id="user-dealer" placeholder="例如：台北濱江 / 彰化金馬" 
+                           class="w-full p-4 rounded-xl border-2 border-slate-100 focus:border-blue-500 outline-none text-lg font-medium transition-all">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-slate-400 mb-1 ml-1 uppercase">技師姓名</label>
+                    <label class="block text-xs font-bold text-slate-400 mb-1 ml-1 uppercase tracking-widest">技師姓名</label>
                     <input type="text" id="user-name" placeholder="請輸入姓名全名" 
-                           class="w-full p-4 rounded-xl border-2 border-slate-100 focus:border-blue-500 outline-none text-lg font-medium">
+                           class="w-full p-4 rounded-xl border-2 border-slate-100 focus:border-blue-500 outline-none text-lg font-medium transition-all">
                 </div>
             </div>
             
@@ -63,20 +59,14 @@
             <div class="p-8">
                 <div class="flex justify-between items-center mb-6">
                     <span id="q-count" class="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full"></span>
-                    <div class="text-right">
-                        <span id="name-tag" class="block text-[10px] text-slate-400 font-bold uppercase"></span>
-                    </div>
+                    <span id="name-tag" class="text-[10px] text-slate-400 font-bold uppercase"></span>
                 </div>
                 <h2 id="q-text" class="text-lg font-bold text-slate-800 mb-8 leading-relaxed"></h2>
                 
-                <!-- 選項 -->
                 <div id="options-box" class="space-y-3"></div>
                 
-                <!-- 反饋提示 -->
                 <div id="feedback-hint" class="mt-6 hidden animate-fade">
-                    <div id="hint-box" class="p-4 rounded-xl text-sm font-bold flex items-center gap-2">
-                        <!-- 動態插入 -->
-                    </div>
+                    <div id="hint-box" class="p-4 rounded-xl text-sm font-bold flex items-center gap-2"></div>
                 </div>
                 
                 <button id="next-btn" onclick="goToNext()" disabled 
@@ -90,26 +80,23 @@
         <div id="result-screen" class="hidden glass-card rounded-3xl shadow-2xl p-10 text-center border border-slate-200 animate-fade">
             <div id="loading-state" class="py-12">
                 <div class="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent mx-auto"></div>
-                <p class="mt-4 text-slate-500 font-medium">詳細評核數據同步中...</p>
+                <p class="mt-4 text-slate-500 font-medium">數據存檔同步中...</p>
             </div>
             
             <div id="score-display" class="hidden">
-                <div class="mb-4 inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full text-green-600">
-                    <span class="text-3xl">✓</span>
-                </div>
+                <div class="mb-4 inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full text-green-600 font-bold text-2xl">✓</div>
                 <h2 class="text-xl font-bold text-slate-800 mb-2">評核完成</h2>
                 <div class="text-7xl font-black text-blue-600 italic mb-8" id="final-score">0</div>
                 
                 <div class="bg-slate-50 rounded-2xl p-5 mb-8 text-left border border-slate-100">
                     <div class="flex justify-between items-center mb-3 border-b border-slate-200 pb-2">
-                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">技術部存檔報告</span>
-                        <span class="text-[10px] bg-green-500 text-white px-2 py-0.5 rounded">SYNCED</span>
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">應試者資訊</span>
+                        <span class="text-[10px] bg-green-500 text-white px-2 py-0.5 rounded">已存檔</span>
                     </div>
                     <div class="space-y-2 text-sm text-slate-600 pt-2 font-medium">
                         <p>經銷商：<span id="summary-dealer" class="text-slate-900"></span></p>
-                        <p>考生：<span id="summary-name" class="text-slate-900"></span></p>
+                        <p>技師姓名：<span id="summary-name" class="text-slate-900"></span></p>
                         <p>最終得分：<span id="summary-score" class="text-blue-600 font-bold"></span></p>
-                        <p class="text-[10px] text-slate-400 mt-4 leading-tight italic">※ 答錯題目之正確答案已即時顯示，請技師務必記取正確規範。</p>
                     </div>
                 </div>
 
@@ -164,7 +151,8 @@
         function startApp() {
             const dealer = document.getElementById('user-dealer').value.trim();
             const name = document.getElementById('user-name').value.trim();
-            if (!dealer || !name) return alert("請輸入經銷商與姓名");
+            if (!dealer || !name) return alert("請輸入經銷商與姓名以開始");
+            
             state.userDealer = dealer;
             state.userName = name;
             
@@ -182,15 +170,14 @@
             document.getElementById('progress-bar').style.width = `${((state.index) / quizData.length) * 100}%`;
             document.getElementById('feedback-hint').classList.add('hidden');
             document.getElementById('next-btn').disabled = true;
-            document.getElementById('next-btn').className = "mt-10 w-full py-4 bg-slate-200 text-slate-400 font-bold rounded-xl cursor-not-allowed transition-all";
-            document.getElementById('next-btn').innerText = "請選取答案";
+            document.getElementById('next-btn').className = "mt-10 w-full py-4 bg-slate-200 text-slate-400 font-bold rounded-xl cursor-not-allowed";
 
             const box = document.getElementById('options-box');
             box.innerHTML = '';
             q.a.forEach((opt, i) => {
                 const b = document.createElement('button');
                 b.className = "opt-btn w-full text-left p-4 rounded-xl font-medium text-slate-700 animate-fade";
-                b.innerHTML = `<span class="inline-block w-6 h-6 border-2 border-slate-200 rounded-full mr-3 text-center text-xs leading-5"></span> ${opt}`;
+                b.innerHTML = `<span class="inline-block w-6 h-6 border-2 border-slate-200 rounded-full mr-3 text-center text-[10px] leading-5">${String.fromCharCode(65+i)}</span> ${opt}`;
                 b.onclick = () => handleSelection(i, b);
                 box.appendChild(b);
             });
@@ -205,38 +192,31 @@
             const techSelectionText = q.a[idx];
             const correctText = q.a[q.c];
 
-            // 紀錄數據
-            const statusLabel = isCorrect ? "對" : "錯";
-            state.logs.push(`Q${state.index + 1}:[${statusLabel}] 技師選:${techSelectionText} / 正確答案:${correctText}`);
+            state.logs.push(`Q${state.index + 1}:[${isCorrect ? "對" : "錯"}] 選:${techSelectionText}`);
             if (isCorrect) state.score += 5;
 
-            // 顯示視覺回饋
             const buttons = document.querySelectorAll('.opt-btn');
             buttons.forEach((btn, i) => {
                 if (i === q.c) {
                     btn.classList.add('opt-correct');
-                    btn.innerHTML = `<span class="inline-block w-6 h-6 bg-green-500 text-white rounded-full mr-3 text-center text-xs leading-6">✓</span> ${q.a[i]}`;
                 } else if (i === idx && !isCorrect) {
                     btn.classList.add('opt-wrong');
-                    btn.innerHTML = `<span class="inline-block w-6 h-6 bg-red-500 text-white rounded-full mr-3 text-center text-xs leading-6">✕</span> ${q.a[i]}`;
                 } else {
                     btn.style.opacity = "0.5";
                 }
             });
 
-            // 顯示提示文字
             const hintBox = document.getElementById('hint-box');
             const hintContainer = document.getElementById('feedback-hint');
             hintContainer.classList.remove('hidden');
             if (isCorrect) {
-                hintBox.className = "p-4 rounded-xl text-sm font-bold flex items-center gap-2 bg-green-50 text-green-700 border border-green-200";
-                hintBox.innerHTML = `<span>✔</span> 答對了！觀念非常正確。`;
+                hintBox.className = "p-4 rounded-xl text-sm font-bold bg-green-50 text-green-700 border border-green-200";
+                hintBox.innerHTML = `<span>✔</span> 答對了！`;
             } else {
-                hintBox.className = "p-4 rounded-xl text-sm font-bold flex items-center gap-2 bg-red-50 text-red-700 border border-red-200";
-                hintBox.innerHTML = `<span>⚠</span> 答錯了！正確答案應為：${correctText}`;
+                hintBox.className = "p-4 rounded-xl text-sm font-bold bg-red-50 text-red-700 border border-red-200";
+                hintBox.innerHTML = `<span>⚠</span> 正確答案：${correctText}`;
             }
 
-            // 啟動下一題按鈕
             const nextBtn = document.getElementById('next-btn');
             nextBtn.disabled = false;
             nextBtn.className = "mt-10 w-full py-4 bg-blue-600 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all";
@@ -285,7 +265,7 @@
             const ctx = canvas.getContext('2d');
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            let particles = Array.from({ length: 100 }).map(() => ({
+            let particles = Array.from({ length: 80 }).map(() => ({
                 x: Math.random() * canvas.width,
                 y: Math.random() * canvas.height - canvas.height,
                 w: Math.random() * 8 + 4,
