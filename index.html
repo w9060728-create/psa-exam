@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>技術評核系統</title>
+    <title>DIAGBOX 專業技術測驗</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
@@ -76,35 +76,48 @@
     const entryScore = "entry.609819735";
     const entryDetails = "entry.1154807191";
 
-    // 題庫 (請貼回您的 20 題)
+    // 完整的 20 題題庫
     const quizData = [
-        { q: "DIAGBOX Premium 方案的主要特徵為何？", a: ["無法連線上網", "每月固定月費制", "不支援最新車款", "買斷制無後續費用"], c: 1 },
-        { q: "針對燃油系統異常，標準診斷步驟首要為何？", a: ["直接更換火星塞", "檢查 ECU 訊號通訊", "更換整顆引擎", "不用處理"], c: 1 }
+        { q: "Stellantis 提供哪種方案包含加固電腦及 PSA XS E 接頭且有四年保固？", a: ["DIAGBOX One", "DIAGBOX Liberty", "DIAGBOX Premium", "DIAGBOX Token"], c: 2 },
+        { q: "獨立維修廠 (Independent repairers) 的授權運作方式為何？", a: ["永久免費授權", "每月固定月費制", "購買代幣，每品牌有效期限為一週", "購買代幣，每品牌有效期限為一年"], c: 2 },
+        { q: "哪個品牌特別標註僅適用於「2018 年以後上市」的車型？", a: ["Citroën", "Peugeot", "DS Automobiles", "Opel / Vauxhall"], c: 3 },
+        { q: "在入口網站若要隱藏不常出現的車型以節省搜尋時間，應點擊？", a: ["Configuration du portail", "Menu Diagnostic", "Gestion Flash", "Aide"], c: 0 },
+        { q: "若要顯示所有「被隱藏」的車型，應點擊入口網站的哪個按鈕？", a: ["Refresh", "Help", "...", "Home"], c: 2 },
+        { q: "執行新車準備 (PVN) 或加裝附件 (如倒車顯影)，應選擇哪個選單？", a: ["Repair", "Fault finding", "Customer delivery", "Servicing"], c: 2 },
+        { q: "在「Repair」選單中，若 ECU 未被自動識別，畫面上會顯示？", a: ["calculateur inconnu", "Connection Error", "Code 404", "System Busy"], c: 0 },
+        { q: "關於「手動配置 (Telecoding Manual)」，下列敘述何者正確？", a: ["可直接進入", "僅限離線使用", "自動配置執行過後才能存取", "僅適用於舊款車型"], c: 2 },
+        { q: "在 Download 選單中若顯示「ECU updated」，代表什麼？", a: ["ECU 損壞", "電池電壓不足", "ECU 版本比伺服器上的更新", "網路中斷"], c: 2 },
+        { q: "更換零件 (如 ECU) 時，應優先使用哪一個子選單？", a: ["Identification", "Fault Reading", "Repair pack (replacement, programming...)", "Actuator Test"], c: 2 },
+        { q: "Fault finding 開始前，驗證圖示 (Authentication icon) 應為何種顏色？", a: ["紅色", "黃色", "藍色", "綠色"], c: 3 },
+        { q: "下列哪項操作屬於「Servicing (保養)」選單的操作範疇？", a: ["加裝警報器", "添加柴油添加劑 (DPF)", "更改輪胎規格", "新車交車檢查"], c: 1 },
+        { q: "2015 年以後新發佈的 TSB (技術通報) 應在哪裡搜尋？", a: ["DIAGBOX 內建標籤", "實體紙本手冊", "Service Box 網頁", "手機簡訊通報"], c: 2 },
+        { q: "關於 TSB 的使用規範，下列敘述何者「錯誤」？", a: ["查閱 TSB 是強制性步驟", "禁止列印 TSB 文件", "可將 TSB 用於不同車身號碼之車輛", "禁止外流資訊"], c: 2 },
+        { q: "在建立 DID-A (技術支援請求) 之前，技師「必須」先執行？", a: ["重灌 DIAGBOX", "查閱 ISolve 確認有無方案", "更換 VCI 接頭", "直接致電技術部"], c: 1 },
+        { q: "準備 DID-A 時，關於診斷畫面截圖的正確做法是？", a: ["用手機拍照", "用數位相機拍照", "使用 DIAGBOX 內建截圖功能", "不需提供畫面"], c: 2 },
+        { q: "針對「同一個」未解決的問題，應如何發送 DID-A 以獲得優先處理？", a: ["建立大量新檔案", "開啟「補充 (Supplement)」案件", "改寄電子郵件", "透過傳真申請"], c: 1 },
+        { q: "若遇到「診斷工具啟用/註冊 (Activation)」問題，求助管道為何？", a: ["DIAGBOX 內的 Report 標籤", "透過 Service Box 請求協助", "ISolve 系統", "重新開機即可"], c: 1 },
+        { q: "為維持工具最佳效能，技師在「每天結束工作時」應？", a: ["保持待機", "關閉電腦電源", "持續充電", "保持螢幕常亮"], c: 1 },
+        { q: "診斷電腦對於「第三方軟體」的安裝規範為何？", a: ["可以自由安裝", "僅能安裝 Stellantis 核准的軟體", "只要不影響效能即可安裝", "無任何限制"], c: 1 }
     ];
 
     let state = {
         dealer: "", name: "", currentQ: 0, score: 0,
         logs: [], timer: 1800, interval: null, isAnswered: false,
-        inProgress: false // 標記是否正在考試中
+        inProgress: false 
     };
 
-    // ==========================================
     // 終極防護一：攔截「上一頁」或「重新整理」
-    // ==========================================
     window.addEventListener("beforeunload", function (e) {
         if (state.inProgress) {
             e.preventDefault();
-            e.returnValue = "測驗尚未完成，確定要離開嗎？成績將會結算並傳送至總部。";
+            e.returnValue = "測驗尚未完成，確定要離開嗎？進度將遺失。";
         }
     });
 
-    // ==========================================
     // 終極防護二：網頁被強制關閉瞬間的「續命傳輸」
-    // ==========================================
     window.addEventListener("visibilitychange", function() {
-        // 當網頁變成隱藏狀態 (關閉分頁、切換APP、按上一頁) 且正在考試中
         if (document.visibilityState === 'hidden' && state.inProgress) {
-            forceSubmit(true); // 帶入 true 代表是「異常中斷」
+            forceSubmit(true); 
         }
     });
 
@@ -115,7 +128,7 @@
 
         state.dealer = d; 
         state.name = n;
-        state.inProgress = true; // 正式進入考試狀態
+        state.inProgress = true; 
 
         document.getElementById("login-screen").classList.add("hidden");
         document.getElementById("quiz-screen").classList.remove("hidden");
@@ -177,7 +190,7 @@
         let logText = "";
         if (selectedIndex === correctIndex) {
             btnElement.classList.add("correct-ans");
-            state.score += 5; 
+            state.score += 5; // 每題 5 分
             logText = `Q${state.currentQ + 1}:[對] 技師選:${qData.a[selectedIndex]}`;
             fbBox.innerText = "✓ 答對了！";
             fbBox.className = "p-4 rounded-lg mb-6 font-bold text-center bg-green-100 text-green-800 block";
@@ -198,23 +211,21 @@
         if (state.currentQ < quizData.length) {
             loadQuestion();
         } else {
-            forceSubmit(false); // 正常寫完交卷
+            forceSubmit(false); 
         }
     }
 
-    // core 傳送引擎
+    // 背景強制傳送引擎
     function forceSubmit(isAborted) {
-        if (!state.inProgress) return; // 防止重複送出
-        state.inProgress = false; // 關閉考試狀態，解除攔截
+        if (!state.inProgress) return; 
+        state.inProgress = false; 
         clearInterval(state.interval);
 
         let finalLogs = [...state.logs];
 
         if (isAborted) {
-            // 如果是被強制關閉的，加入警告標語
-            finalLogs.push("【嚴重警告：技師於此題強行關閉網頁或返回上一頁】");
+            finalLogs.push("【嚴重警告：技師於此題強行關閉網頁或返回上一頁，疑似作弊】");
         } else {
-            // 正常交卷或時間到，把沒寫完的題目補上未答
             while (state.currentQ < quizData.length) {
                 if(!state.isAnswered){
                      finalLogs.push(`Q${state.currentQ + 1}:[未答] 未作答 / 正解:${quizData[state.currentQ].a[quizData[state.currentQ].c]}`);
@@ -230,16 +241,13 @@
         params.append(entryScore, state.score.toString());
         params.append(entryDetails, finalLogs.join(" | "));
 
-        // 【最關鍵的一行：keepalive: true】
-        // 告訴瀏覽器：就算網頁關閉了，這個封包也必須在背景傳送到 Google 伺服器！
         fetch(formUrl, {
             method: "POST", mode: "no-cors",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
             body: params.toString(),
             keepalive: true 
-        }).catch(err => console.log("背景傳送失敗", err));
+        }).catch(err => console.log(err));
 
-        // 如果是正常交卷，才顯示結果畫面
         if (!isAborted) {
             document.getElementById("quiz-screen").classList.add("hidden");
             document.getElementById("result-screen").classList.remove("hidden");
