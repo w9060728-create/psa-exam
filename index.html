@@ -167,13 +167,13 @@
             const isCorrect = state.selected === q.c;
             if (isCorrect) state.score += 5;
             
-            // 抓取文字內容
-            const selectedText = q.a[state.selected];
-            const correctText = q.a[q.c];
+            // 關鍵修改：抓取詳細文字內容，確保後台紀錄包含完整答案
+            const techSelection = q.a[state.selected];
+            const correctAnswerText = q.a[q.c];
+            const statusLabel = isCorrect ? "對" : "錯";
 
-            // 存入深度紀錄格式： Q1:[錯] 技師選:方案A / 正確解:方案B
-            const status = isCorrect ? "對" : "錯";
-            state.logs.push(`Q${state.index + 1}:[${status}] 技師選:${selectedText} / 正確解:${correctText}`);
+            // 存入極詳細紀錄格式： Q1:[錯] 技師選:方案A / 正確解:方案B
+            state.logs.push(`Q${state.index + 1}:[${statusLabel}] 技師選:${techSelection} / 正確答案:${correctAnswerText}`);
 
             if (state.index < quizData.length - 1) {
                 state.index++;
@@ -193,6 +193,7 @@
             const params = new URLSearchParams();
             params.append(CONFIG.nameEntry, state.userName);
             params.append(CONFIG.scoreEntry, state.score);
+            // 提交所有累積的詳細文字紀錄
             params.append(CONFIG.detailEntry, state.logs.join(" | ")); 
 
             fetch(postUrl, {
@@ -234,7 +235,7 @@
                     ctx.fillStyle = p.color; ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
                     ctx.restore();
                 });
-                if (particles[0].y < canvas.height) requestAnimationFrame(render);
+                if (particles.length > 0 && particles[0].y < canvas.height * 2) requestAnimationFrame(render);
             }
             render();
         }
