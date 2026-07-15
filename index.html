@@ -37,7 +37,6 @@
 
     <!-- 測驗畫面 -->
     <div id="quiz-screen" class="hidden bg-white p-6 rounded-xl shadow-lg w-full max-w-2xl relative">
-        <!-- 計時器 -->
         <div class="absolute top-4 right-6 text-xl font-mono" id="timer-display">⏱️ 30:00</div>
         
         <div class="mb-6 mt-8">
@@ -77,44 +76,46 @@
     const entryScore = "entry.609819735";
     const entryDetails = "entry.1154807191";
 
-    // 題庫 (請在此處替換為您的完整 20 題)
+    // 題庫 (請貼回您的 20 題)
     const quizData = [
         { q: "DIAGBOX Premium 方案的主要特徵為何？", a: ["無法連線上網", "每月固定月費制", "不支援最新車款", "買斷制無後續費用"], c: 1 },
-        { q: "針對燃油系統異常，標準診斷步驟首要為何？", a: ["直接更換火星塞", "檢查 ECU 訊號通訊", "更換整顆引擎", "不用處理"], c: 1 },
-        // 此處僅放2題做示範，請自行把剩下的題目貼回來
+        { q: "針對燃油系統異常，標準診斷步驟首要為何？", a: ["直接更換火星塞", "檢查 ECU 訊號通訊", "更換整顆引擎", "不用處理"], c: 1 }
     ];
 
     let state = {
         dealer: "", name: "", currentQ: 0, score: 0,
-        logs: [], timer: 1800, interval: null, isAnswered: false
+        logs: [], timer: 1800, interval: null, isAnswered: false,
+        inProgress: false // 標記是否正在考試中
     };
 
     // ==========================================
-    // 1. 防作弊機制：一進場就先送 0分 紀錄
+    // 終極防護一：攔截「上一頁」或「重新整理」
     // ==========================================
-    function sendAntiCheatRecord() {
-        const params = new URLSearchParams();
-        params.append(entryDealer, state.dealer);
-        params.append(entryName, state.name);
-        params.append(entryScore, "0");
-        params.append(entryDetails, "【警告】該技師已開始測驗，若無後續成績，代表中途關閉網頁未正常交卷！");
+    window.addEventListener("beforeunload", function (e) {
+        if (state.inProgress) {
+            e.preventDefault();
+            e.returnValue = "測驗尚未完成，確定要離開嗎？成績將會結算並傳送至總部。";
+        }
+    });
 
-        fetch(formUrl, {
-            method: "POST", mode: "no-cors",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: params.toString()
-        }).catch(e => console.log("防作弊訊號發送失敗", e));
-    }
+    // ==========================================
+    // 終極防護二：網頁被強制關閉瞬間的「續命傳輸」
+    // ==========================================
+    window.addEventListener("visibilitychange", function() {
+        // 當網頁變成隱藏狀態 (關閉分頁、切換APP、按上一頁) 且正在考試中
+        if (document.visibilityState === 'hidden' && state.inProgress) {
+            forceSubmit(true); // 帶入 true 代表是「異常中斷」
+        }
+    });
 
     function startExam() {
         const d = document.getElementById("dealer-input").value.trim();
         const n = document.getElementById("name-input").value.trim();
         if (!d || !n) return alert("請輸入經銷商與姓名！");
 
-        state.dealer = d; state.name = n;
-        
-        // 觸發防作弊紀錄
-        sendAntiCheatRecord();
+        state.dealer = d; 
+        state.name = n;
+        state.inProgress = true; // 正式進入考試狀態
 
         document.getElementById("login-screen").classList.add("hidden");
         document.getElementById("quiz-screen").classList.remove("hidden");
@@ -123,9 +124,6 @@
         loadQuestion();
     }
 
-    // ==========================================
-    // 2. 計時器機制 (30分鐘)
-    // ==========================================
     function startTimer() {
         const display = document.getElementById("timer-display");
         state.interval = setInterval(() => {
@@ -134,19 +132,15 @@
             let s = (state.timer % 60).toString().padStart(2, '0');
             display.innerText = `⏱️ ${m}:${s}`;
 
-            if (state.timer <= 300) display.classList.add("blink-red"); // 最後5分鐘紅字閃爍
+            if (state.timer <= 300) display.classList.add("blink-red");
 
             if (state.timer <= 0) {
-                clearInterval(state.interval);
                 alert("時間到！系統將自動交卷。");
-                forceSubmit();
+                forceSubmit(false);
             }
         }, 1000);
     }
 
-    // ==========================================
-    // 3. 測驗互動與即時回饋
-    // ==========================================
     function loadQuestion() {
         state.isAnswered = false;
         document.getElementById("next-btn").classList.add("hidden");
@@ -170,7 +164,7 @@
     }
 
     function selectAnswer(selectedIndex, btnElement) {
-        if (state.isAnswered) return; // 鎖定重複點擊
+        if (state.isAnswered) return;
         state.isAnswered = true;
 
         const qData = quizData[state.currentQ];
@@ -178,23 +172,19 @@
         const allBtns = document.querySelectorAll(".option-btn");
         const fbBox = document.getElementById("feedback-box");
 
-        // 鎖定所有按鈕
         allBtns.forEach(b => b.classList.add("disabled-btn"));
 
         let logText = "";
-
         if (selectedIndex === correctIndex) {
-            // 答對
             btnElement.classList.add("correct-ans");
-            state.score += 5; // 假設每題 5 分
+            state.score += 5; 
             logText = `Q${state.currentQ + 1}:[對] 技師選:${qData.a[selectedIndex]}`;
             fbBox.innerText = "✓ 答對了！";
             fbBox.className = "p-4 rounded-lg mb-6 font-bold text-center bg-green-100 text-green-800 block";
         } else {
-            // 答錯
             btnElement.classList.add("wrong-ans");
-            allBtns[correctIndex].classList.add("correct-ans"); // 標示正確答案
-            logText = `Q${state.currentQ + 1}:[錯] 技師選:${qData.a[selectedIndex]} / 正確解:${qData.a[correctIndex]}`;
+            allBtns[correctIndex].classList.add("correct-ans");
+            logText = `Q${state.currentQ + 1}:[錯] 技師選:${qData.a[selectedIndex]} / 正解:${qData.a[correctIndex]}`;
             fbBox.innerText = `✗ 答錯了！正確答案應為：「${qData.a[correctIndex]}」`;
             fbBox.className = "p-4 rounded-lg mb-6 font-bold text-center bg-red-100 text-red-800 block";
         }
@@ -208,42 +198,55 @@
         if (state.currentQ < quizData.length) {
             loadQuestion();
         } else {
-            forceSubmit();
+            forceSubmit(false); // 正常寫完交卷
         }
     }
 
-    // ==========================================
-    // 4. 強制交卷與背景上傳
-    // ==========================================
-    function forceSubmit() {
-        clearInterval(state.interval); // 停止計時
-        document.getElementById("quiz-screen").classList.add("hidden");
-        document.getElementById("result-screen").classList.remove("hidden");
-        
-        // 如果時間到沒寫完，把剩下的標註為未答
-        while (state.currentQ < quizData.length) {
-            if(!state.isAnswered){
-                 state.logs.push(`Q${state.currentQ + 1}:[未答] 技師未作答 / 正確解:${quizData[state.currentQ].a[quizData[state.currentQ].c]}`);
-            }
-            state.currentQ++;
-            state.isAnswered = false;
-        }
+    // core 傳送引擎
+    function forceSubmit(isAborted) {
+        if (!state.inProgress) return; // 防止重複送出
+        state.inProgress = false; // 關閉考試狀態，解除攔截
+        clearInterval(state.interval);
 
-        document.getElementById("res-dealer").innerText = state.dealer;
-        document.getElementById("res-name").innerText = state.name;
-        document.getElementById("final-score").innerText = state.score;
+        let finalLogs = [...state.logs];
+
+        if (isAborted) {
+            // 如果是被強制關閉的，加入警告標語
+            finalLogs.push("【嚴重警告：技師於此題強行關閉網頁或返回上一頁】");
+        } else {
+            // 正常交卷或時間到，把沒寫完的題目補上未答
+            while (state.currentQ < quizData.length) {
+                if(!state.isAnswered){
+                     finalLogs.push(`Q${state.currentQ + 1}:[未答] 未作答 / 正解:${quizData[state.currentQ].a[quizData[state.currentQ].c]}`);
+                }
+                state.currentQ++;
+                state.isAnswered = false;
+            }
+        }
 
         const params = new URLSearchParams();
         params.append(entryDealer, state.dealer);
         params.append(entryName, state.name);
         params.append(entryScore, state.score.toString());
-        params.append(entryDetails, state.logs.join(" | "));
+        params.append(entryDetails, finalLogs.join(" | "));
 
+        // 【最關鍵的一行：keepalive: true】
+        // 告訴瀏覽器：就算網頁關閉了，這個封包也必須在背景傳送到 Google 伺服器！
         fetch(formUrl, {
             method: "POST", mode: "no-cors",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: params.toString()
-        }).catch(err => console.log(err));
+            body: params.toString(),
+            keepalive: true 
+        }).catch(err => console.log("背景傳送失敗", err));
+
+        // 如果是正常交卷，才顯示結果畫面
+        if (!isAborted) {
+            document.getElementById("quiz-screen").classList.add("hidden");
+            document.getElementById("result-screen").classList.remove("hidden");
+            document.getElementById("res-dealer").innerText = state.dealer;
+            document.getElementById("res-name").innerText = state.name;
+            document.getElementById("final-score").innerText = state.score;
+        }
     }
 </script>
 </body>
