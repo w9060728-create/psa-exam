@@ -3,82 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DIAGBOX 專業技術評核 - 進階數據版</title>
+    <title>DIAGBOX 專業技術評核系統</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap');
-        body { font-family: 'Noto Sans TC', sans-serif; background-color: #f8fafc; overflow-x: hidden; }
-        .glass-panel { background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(10px); }
-        .option-active { border-color: #2563eb; background-color: #eff6ff; color: #1e40af; }
-        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        .animate-slide-in { animation: slideIn 0.5s ease-out forwards; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Noto+Sans+TC:wght@400;700&display=swap');
+        body { font-family: 'Inter', 'Noto Sans TC', sans-serif; background-color: #f1f5f9; }
+        .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(8px); }
+        .option-selected { border-color: #2563eb; background-color: #eff6ff; color: #1e40af; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.1); }
         #confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 100; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade { animation: fadeIn 0.4s ease-out forwards; }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
 
     <canvas id="confetti-canvas"></canvas>
-    <div id="toast-container" class="fixed top-5 right-5 z-[110] space-y-4"></div>
 
     <div id="app" class="w-full max-w-lg">
         
-        <!-- 登入介面 -->
-        <div id="login-screen" class="glass-panel rounded-3xl shadow-2xl p-8 text-center border border-white">
-            <div class="w-20 h-20 bg-blue-600 rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-lg transform -rotate-3">
-                <span class="text-white font-bold text-2xl">DBX</span>
+        <!-- 登入畫面 -->
+        <div id="login-screen" class="glass-card rounded-3xl shadow-2xl p-8 border border-white text-center">
+            <div class="inline-block p-4 bg-blue-600 rounded-2xl mb-6 shadow-lg rotate-3">
+                <span class="text-white font-black text-2xl">DBX</span>
             </div>
             <h1 class="text-2xl font-bold text-slate-800 mb-2">技術部專業評核</h1>
-            <p class="text-slate-500 mb-8 text-sm">請輸入正確姓名，答題紀錄將存於雲端試算表</p>
+            <p class="text-slate-500 text-sm mb-8">請輸入姓名以開始測驗，紀錄將同步至雲端</p>
             
-            <input type="text" id="user-name" placeholder="請輸入姓名" 
-                   class="w-full p-4 mb-6 rounded-xl border-2 border-slate-200 focus:border-blue-500 outline-none text-center text-lg font-medium">
+            <input type="text" id="user-name" placeholder="請輸入技師姓名" 
+                   class="w-full p-4 mb-6 rounded-xl border-2 border-slate-200 focus:border-blue-500 outline-none text-center text-lg font-bold">
             
-            <button onclick="startQuiz()" class="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg transition-transform active:scale-95">
+            <button onclick="startApp()" class="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg transition-transform active:scale-95">
                 開始進入評核
             </button>
         </div>
 
         <!-- 測驗內容區 -->
-        <div id="quiz-screen" class="hidden glass-panel rounded-3xl shadow-2xl overflow-hidden border border-white">
+        <div id="quiz-screen" class="hidden glass-card rounded-3xl shadow-2xl overflow-hidden border border-white animate-fade">
             <div class="h-2 w-full bg-slate-100">
-                <div id="progress-bar" class="h-full bg-blue-500 transition-all duration-500 w-0"></div>
+                <div id="progress-bar" class="h-full bg-blue-500 transition-all duration-500" style="width: 0%"></div>
             </div>
             <div class="p-8">
                 <div class="flex justify-between items-center mb-6">
-                    <span id="question-number" class="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">載入中...</span>
-                    <span id="user-display" class="text-xs text-slate-400 font-medium"></span>
+                    <span id="q-count" class="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">載入中...</span>
+                    <span id="name-tag" class="text-xs text-slate-400 font-medium"></span>
                 </div>
-                <h2 id="question-text" class="text-lg font-bold text-slate-800 mb-8 leading-relaxed">題庫準備中...</h2>
-                <div id="options-container" class="space-y-3"></div>
+                <h2 id="q-text" class="text-lg font-bold text-slate-800 mb-8 leading-relaxed">題庫載入中...</h2>
+                <div id="options-box" class="space-y-3"></div>
                 
-                <button id="next-btn" onclick="handleNext()" disabled 
+                <button id="next-btn" onclick="goToNext()" disabled 
                         class="mt-10 w-full py-4 bg-slate-200 text-slate-400 font-bold rounded-xl cursor-not-allowed transition-all">
-                    請先選取答案
+                    請選取一個答案
                 </button>
             </div>
         </div>
 
         <!-- 提交與結果 -->
-        <div id="result-screen" class="hidden glass-panel rounded-3xl shadow-2xl p-10 text-center border border-white">
-            <div id="syncing-ui" class="py-12">
+        <div id="result-screen" class="hidden glass-card rounded-3xl shadow-2xl p-10 text-center border border-white animate-fade">
+            <div id="loading-state" class="py-12">
                 <div class="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent mx-auto"></div>
-                <p class="mt-4 text-slate-500 font-medium">答題紀錄同步中...</p>
+                <p class="mt-4 text-slate-500 font-medium">數據正在加密同步至後台...</p>
             </div>
             
-            <div id="score-ui" class="hidden">
+            <div id="score-display" class="hidden">
                 <div class="mb-4 inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full text-green-600">
                     <span class="text-3xl">✓</span>
                 </div>
-                <h2 class="text-xl font-bold text-slate-800 mb-2">測驗評核完成</h2>
+                <h2 class="text-xl font-bold text-slate-800 mb-2">評核完成</h2>
                 <div class="text-7xl font-black text-blue-600 italic mb-8" id="final-score">0</div>
-                <div class="bg-blue-50 rounded-2xl p-5 mb-8 text-blue-800 text-xs border border-blue-100 text-left">
-                    <p class="font-bold mb-1">雲端存取報告</p>
-                    • 考生姓名：<span id="res-name"></span><br>
-                    • 原始分數：<span id="res-score"></span><br>
-                    • 答題詳情：已加密傳送至後台
+                
+                <div class="bg-slate-50 rounded-2xl p-5 mb-8 text-left border border-slate-100">
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">雲端同步報告</span>
+                        <span class="text-[10px] bg-green-500 text-white px-2 py-0.5 rounded">SUCCESS</span>
+                    </div>
+                    <div class="space-y-1 text-sm text-slate-600 font-medium">
+                        <p>考生姓名：<span id="summary-name" class="text-slate-900"></span></p>
+                        <p>獲得分數：<span id="summary-score" class="text-blue-600"></span></p>
+                        <p>答題詳情：已寫入後台試算表</p>
+                    </div>
                 </div>
-                <button onclick="location.reload()" class="w-full py-4 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-900 transition-colors">
-                    重新測驗
+
+                <button onclick="location.reload()" class="w-full py-4 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-900 transition-colors shadow-lg">
+                    重新進行測驗
                 </button>
             </div>
         </div>
@@ -89,10 +95,10 @@
             formID: "1FAIpQLSftyWqZ8Q8tkYGA6bQeSnP2nxZldQoPt2gH7mSXczpfnNloaA",
             nameEntry: "entry.1735160920",
             scoreEntry: "entry.609819735",
-            detailEntry: "entry.XXXXXXX" // <--- 請將這裡改為您新欄位的 Entry ID
+            detailEntry: "entry.1154807191" // 這是您剛新增的答題詳情欄位
         };
 
-        const questions = [
+        const quizData = [
             { q: "Stellantis 提供哪種方案包含加固電腦、PSA XS E 診斷接頭且有四年保固？", a: ["DIAGBOX One", "DIAGBOX Liberty", "DIAGBOX Premium", "DIAGBOX Token"], c: 2 },
             { q: "獨立維修廠 (Independent repairers) 的授權運作方式為何？", a: ["永久免費授權", "每月固定月費制", "購買代幣，每品牌有效期限為一週", "購買代幣，每品牌有效期限為一年"], c: 2 },
             { q: "哪個品牌特別標註僅適用於「2018 年以後上市」的車型？", a: ["Citroën", "Peugeot", "DS Automobiles", "Opel / Vauxhall"], c: 3 },
@@ -115,38 +121,106 @@
             { q: "診斷電腦對於「第三方軟體」的安裝規範為何？", a: ["可以自由安裝", "僅能安裝 Stellantis 核准的軟體", "只要不影響效能即可安裝", "無任何限制"], c: 1 }
         ];
 
-        let state = { 
-            currentIdx: 0, 
-            score: 0, 
-            userName: "", 
+        let state = {
+            index: 0,
+            score: 0,
+            userName: "",
             selected: null,
-            userRecords: [] // 儲存答題紀錄
+            logs: [] // 儲存答題詳細紀錄
         };
 
-        function showToast(message, type = 'success') {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = `${type === 'success' ? 'bg-green-600' : 'bg-red-600'} text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 animate-slide-in font-bold min-w-[280px]`;
-            toast.innerHTML = `<span>${type === 'success' ? '✓' : '✕'}</span> <span>${message}</span>`;
-            container.appendChild(toast);
-            setTimeout(() => { toast.remove(); }, 4000);
+        function startApp() {
+            const name = document.getElementById('user-name').value.trim();
+            if (!name) return alert("請輸入技師姓名");
+            state.userName = name;
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('quiz-screen').classList.remove('hidden');
+            document.getElementById('name-tag').innerText = `技師：${name}`;
+            renderQuestion();
         }
 
-        function runConfetti() {
+        function renderQuestion() {
+            const q = quizData[state.index];
+            document.getElementById('q-count').innerText = `題目 ${state.index + 1} / ${quizData.length}`;
+            document.getElementById('q-text').innerText = q.q;
+            document.getElementById('progress-bar').style.width = `${((state.index) / quizData.length) * 100}%`;
+            
+            const box = document.getElementById('options-box');
+            box.innerHTML = '';
+            q.a.forEach((opt, i) => {
+                const b = document.createElement('button');
+                b.className = "w-full text-left p-4 rounded-xl border-2 border-slate-100 hover:bg-slate-50 font-medium transition-all text-slate-700 animate-fade";
+                b.innerText = opt;
+                b.onclick = () => {
+                    state.selected = i;
+                    document.querySelectorAll('#options-box button').forEach(el => el.className = "w-full text-left p-4 rounded-xl border-2 border-slate-100 hover:bg-slate-50 font-medium transition-all text-slate-700");
+                    b.className = "w-full text-left p-4 rounded-xl border-2 option-selected font-bold transition-all";
+                    document.getElementById('next-btn').disabled = false;
+                    document.getElementById('next-btn').className = "mt-10 w-full py-4 bg-blue-600 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all";
+                };
+                box.appendChild(b);
+            });
+        }
+
+        function goToNext() {
+            const q = quizData[state.index];
+            const isCorrect = state.selected === q.c;
+            if (isCorrect) state.score += 5;
+            
+            // 紀錄這題的狀況
+            state.logs.push(`Q${state.index + 1}:${isCorrect ? '對' : '錯'}(選${String.fromCharCode(65 + state.selected)})`);
+
+            if (state.index < quizData.length - 1) {
+                state.index++;
+                state.selected = null;
+                document.getElementById('next-btn').disabled = true;
+                renderQuestion();
+            } else {
+                finalize();
+            }
+        }
+
+        function finalize() {
+            document.getElementById('quiz-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.remove('hidden');
+            
+            const postUrl = `https://docs.google.com/forms/d/e/${CONFIG.formID}/formResponse`;
+            const params = new URLSearchParams();
+            params.append(CONFIG.nameEntry, state.userName);
+            params.append(CONFIG.scoreEntry, state.score);
+            params.append(CONFIG.detailEntry, state.logs.join(" | ")); // 將所有紀錄合併成一段文字
+
+            fetch(postUrl, {
+                method: 'POST', mode: 'no-cors',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: params.toString()
+            }).then(() => {
+                setTimeout(() => {
+                    document.getElementById('loading-state').classList.add('hidden');
+                    document.getElementById('score-display').classList.remove('hidden');
+                    document.getElementById('final-score').innerText = state.score;
+                    document.getElementById('summary-name').innerText = state.userName;
+                    document.getElementById('summary-score').innerText = state.score + " 分";
+                    if (state.score >= 60) triggerConfetti();
+                }, 1500);
+            });
+        }
+
+        function triggerConfetti() {
             const canvas = document.getElementById('confetti-canvas');
             const ctx = canvas.getContext('2d');
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            let particles = Array.from({ length: 100 }).map(() => ({
+            let particles = Array.from({ length: 80 }).map(() => ({
                 x: Math.random() * canvas.width,
                 y: Math.random() * canvas.height - canvas.height,
                 w: Math.random() * 8 + 4,
                 h: Math.random() * 8 + 4,
                 color: `hsl(${Math.random() * 360}, 70%, 50%)`,
-                speed: Math.random() * 3 + 2,
+                speed: Math.random() * 3 + 3,
                 r: Math.random() * 360
             }));
-            function draw() {
+            function render() {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 particles.forEach(p => {
                     p.y += p.speed; p.r += 2;
@@ -155,93 +229,10 @@
                     ctx.fillStyle = p.color; ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
                     ctx.restore();
                 });
-                if (particles[0].y < canvas.height) requestAnimationFrame(draw);
+                if (particles[0].y < canvas.height) requestAnimationFrame(render);
             }
-            draw();
-        }
-
-        function startQuiz() {
-            const name = document.getElementById('user-name').value.trim();
-            if (!name) { showToast("請輸入姓名", "error"); return; }
-            state.userName = name;
-            document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('quiz-screen').classList.remove('hidden');
-            document.getElementById('user-display').innerText = `考生: ${name}`;
-            renderQuestion();
-        }
-
-        function renderQuestion() {
-            const q = questions[state.currentIdx];
-            document.getElementById('question-number').innerText = `Q${state.currentIdx + 1} / ${questions.length}`;
-            document.getElementById('question-text').innerText = q.q;
-            document.getElementById('progress-bar').style.width = `${((state.currentIdx) / questions.length) * 100}%`;
-            const container = document.getElementById('options-container');
-            container.innerHTML = '';
-            q.a.forEach((opt, i) => {
-                const btn = document.createElement('button');
-                btn.className = "w-full text-left p-4 rounded-xl border-2 border-slate-100 hover:bg-slate-50 font-medium transition-all text-slate-700";
-                btn.innerText = opt;
-                btn.onclick = () => {
-                    state.selected = i;
-                    document.querySelectorAll('#options-container button').forEach(b => b.classList.remove('option-active'));
-                    btn.classList.add('option-active');
-                    document.getElementById('next-btn').disabled = false;
-                    document.getElementById('next-btn').className = "mt-10 w-full py-4 bg-blue-600 text-white font-bold rounded-xl shadow-lg";
-                };
-                container.appendChild(btn);
-            });
-        }
-
-        function handleNext() {
-            const currentQ = questions[state.currentIdx];
-            const isCorrect = state.selected === currentQ.c;
-            if (isCorrect) state.score += 5;
-            
-            // 紀錄詳細資料：[題目編號] 用戶選了... (正確與否)
-            state.userRecords.push(`Q${state.currentIdx+1}:${currentQ.a[state.selected]}(${isCorrect?'對':'錯'})`);
-
-            if (state.currentIdx < questions.length - 1) {
-                state.currentIdx++;
-                state.selected = null;
-                document.getElementById('next-btn').disabled = true;
-                document.getElementById('next-btn').className = "mt-10 w-full py-4 bg-slate-200 text-slate-400 font-bold rounded-xl";
-                renderQuestion();
-            } else {
-                submitData();
-            }
-        }
-
-        function submitData() {
-            document.getElementById('quiz-screen').classList.add('hidden');
-            document.getElementById('result-screen').classList.remove('hidden');
-            
-            const postUrl = `https://docs.google.com/forms/d/e/${CONFIG.formID}/formResponse`;
-            const params = new URLSearchParams();
-            params.append(CONFIG.nameEntry, state.userName);
-            params.append(CONFIG.scoreEntry, state.score);
-            // 將陣列轉成字串傳送
-            params.append(CONFIG.detailEntry, state.userRecords.join(" | "));
-
-            fetch(postUrl, {
-                method: 'POST', mode: 'no-cors',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: params.toString()
-            }).then(() => {
-                setTimeout(() => {
-                    document.getElementById('syncing-ui').classList.add('hidden');
-                    document.getElementById('score-ui').classList.remove('hidden');
-                    document.getElementById('final-score').innerText = state.score;
-                    document.getElementById('res-name').innerText = state.userName;
-                    document.getElementById('res-score').innerText = state.score;
-                    showToast("數據同步成功！");
-                    if(state.score >= 60) runConfetti();
-                }, 1500);
-            });
+            render();
         }
     </script>
 </body>
 </html>
-```
-
-
-
