@@ -100,7 +100,7 @@
 
     let state = {
         dealer: "", name: "", currentQ: 0, score: 0,
-        logs: [], timer: 1800, interval: null, isAnswered: false,
+        logs: [], timer: 120, interval: null, isAnswered: false,
         inProgress: false 
     };
 
@@ -222,7 +222,7 @@
         let finalLogs = [...state.logs];
 
         if (isAborted) {
-            finalLogs.push("【嚴重警告：技師於此題強行關閉網頁或返回上一頁，疑似作弊】");
+            finalLogs.push("【警告：技師於此題強行關閉網頁或返回上一頁】");
         } else {
             while (state.currentQ < quizData.length) {
                 if(!state.isAnswered){
