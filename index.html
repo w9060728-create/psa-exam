@@ -37,10 +37,15 @@
 
     <!-- 測驗畫面 -->
     <div id="quiz-screen" class="hidden bg-white p-6 rounded-xl shadow-lg w-full max-w-2xl relative">
-        <div class="absolute top-4 right-6 text-xl font-mono" id="timer-display">⏱️ 30:00</div>
+        <!-- 總計時器 -->
+        <div class="absolute top-4 right-6 text-xl font-mono text-slate-700" id="timer-display">⏱️ 30:00</div>
         
         <div class="mb-6 mt-8">
-            <div class="text-sm font-bold text-blue-600 mb-2" id="progress-text">第 1 / 20 題</div>
+            <div class="flex justify-between items-center mb-2">
+                <div class="text-sm font-bold text-blue-600" id="progress-text">第 1 / 20 題</div>
+                <!-- 單題計時器 -->
+                <div class="text-sm font-bold text-red-500 bg-red-50 px-3 py-1 rounded-full" id="q-timer-display">⏳ 本題限時: 02:00</div>
+            </div>
             <div class="w-full bg-gray-200 rounded-full h-2">
                 <div id="progress-bar" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 5%"></div>
             </div>
@@ -96,12 +101,13 @@
         { q: "針對「同一個」未解決的問題，應如何發送 DID-A 以獲得優先處理？", a: ["建立大量新檔案", "開啟「補充 (Supplement)」案件", "改寄電子郵件", "透過傳真申請"], c: 1 },
         { q: "若遇到「診斷工具啟用/註冊 (Activation)」問題，求助管道為何？", a: ["DIAGBOX 內的 Report 標籤", "透過 Service Box 請求協助", "ISolve 系統", "重新開機即可"], c: 1 },
         { q: "為維持工具最佳效能，技師在「每天結束工作時」應？", a: ["保持待機", "關閉電腦電源", "持續充電", "保持螢幕常亮"], c: 1 }
-    ]; // <--- 就是這裡！原本少加了這個結束陣列的括號！
+    ];
 
     let state = {
         dealer: "", name: "", currentQ: 0, score: 0,
-        logs: [], timer: 120, interval: null, isAnswered: false,
-        inProgress: false 
+        logs: [], timer: 1800, interval: null, 
+        qTimer: 120, qInterval: null, // 新增單題計時狀態
+        isAnswered: false, inProgress: false 
     };
 
     // 終極防護一：攔截「上一頁」或「重新整理」
@@ -131,11 +137,12 @@
         document.getElementById("login-screen").classList.add("hidden");
         document.getElementById("quiz-screen").classList.remove("hidden");
         
-        startTimer();
+        startGlobalTimer();
         loadQuestion();
     }
 
-    function startTimer() {
+    // 總計時器 (30分鐘)
+    function startGlobalTimer() {
         const display = document.getElementById("timer-display");
         state.interval = setInterval(() => {
             state.timer--;
@@ -146,10 +153,63 @@
             if (state.timer <= 300) display.classList.add("blink-red");
 
             if (state.timer <= 0) {
-                alert("時間到！系統將自動交卷。");
+                alert("總測驗時間到！系統將自動交卷。");
                 forceSubmit(false);
             }
         }, 1000);
+    }
+
+    // 單題計時器 (2分鐘)
+    function startQuestionTimer() {
+        clearInterval(state.qInterval);
+        state.qTimer = 120; // 120秒 = 2分鐘
+        updateQTimerDisplay();
+
+        state.qInterval = setInterval(() => {
+            state.qTimer--;
+            updateQTimerDisplay();
+
+            if (state.qTimer <= 0) {
+                clearInterval(state.qInterval);
+                handleQuestionTimeUp();
+            }
+        }, 1000);
+    }
+
+    function updateQTimerDisplay() {
+        let m = Math.floor(state.qTimer / 60).toString().padStart(2, '0');
+        let s = (state.qTimer % 60).toString().padStart(2, '0');
+        const qDisplay = document.getElementById("q-timer-display");
+        qDisplay.innerText = `⏳ 本題限時: ${m}:${s}`;
+        
+        // 最後 10 秒閃爍提示
+        if(state.qTimer <= 10 && state.qTimer > 0) {
+            qDisplay.classList.add("blink-red");
+        } else {
+            qDisplay.classList.remove("blink-red");
+        }
+    }
+
+    function handleQuestionTimeUp() {
+        if (state.isAnswered) return;
+        state.isAnswered = true;
+
+        const qData = quizData[state.currentQ];
+        const correctIndex = qData.c;
+        const allBtns = document.querySelectorAll(".option-btn");
+        const fbBox = document.getElementById("feedback-box");
+
+        // 鎖定所有按鈕並標示正確答案
+        allBtns.forEach(b => b.classList.add("disabled-btn"));
+        allBtns[correctIndex].classList.add("correct-ans");
+
+        // 紀錄與顯示回饋
+        let logText = `Q${state.currentQ + 1}:[未答] 逾時未作答 / 正解:${qData.a[correctIndex]}`;
+        fbBox.innerText = `⏳ 測驗逾時！本題未得分。正確答案應為：「${qData.a[correctIndex]}」`;
+        fbBox.className = "p-4 rounded-lg mb-6 font-bold text-center bg-orange-100 text-orange-800 block";
+
+        state.logs.push(logText);
+        document.getElementById("next-btn").classList.remove("hidden");
     }
 
     function loadQuestion() {
@@ -172,11 +232,16 @@
             btn.onclick = () => selectAnswer(idx, btn);
             opts.appendChild(btn);
         });
+
+        // 啟動本題倒數計時
+        startQuestionTimer();
     }
 
     function selectAnswer(selectedIndex, btnElement) {
         if (state.isAnswered) return;
         state.isAnswered = true;
+        
+        clearInterval(state.qInterval); // 答題後立刻停止單題計時器
 
         const qData = quizData[state.currentQ];
         const correctIndex = qData.c;
@@ -217,12 +282,13 @@
     function forceSubmit(isAborted) {
         if (!state.inProgress) return; 
         state.inProgress = false; 
-        clearInterval(state.interval);
+        clearInterval(state.interval); // 停止總計時器
+        clearInterval(state.qInterval); // 停止單題計時器
 
         let finalLogs = [...state.logs];
 
         if (isAborted) {
-            finalLogs.push("【警告：技師於此題強行關閉網頁或返回上一頁】");
+            finalLogs.push("【嚴重警告：技師於此題強行關閉網頁或返回上一頁，疑似作弊】");
         } else {
             while (state.currentQ < quizData.length) {
                 if(!state.isAnswered){
