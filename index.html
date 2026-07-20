@@ -76,11 +76,10 @@
     const entryScore = "entry.609819735";
     const entryDetails = "entry.1154807191";
 
-    // 完整的 20 題題庫
     const quizData = [
-        { q: "Stellantis 提供哪種方案包含加固電腦及 PSA XS E 接頭且有四年保固？", a: ["DIAGBOX One", "DIAGBOX Liberty", "DIAGBOX Premium", "DIAGBOX Token"], c: 2 },
-        { q: "獨立維修廠 (Independent repairers) 的授權運作方式為何？", a: ["永久免費授權", "每月固定月費制", "購買代幣，每品牌有效期限為一週", "購買代幣，每品牌有效期限為一年"], c: 2 },
-        { q: "哪個品牌特別標註僅適用於「2018 年以後上市」的車型？", a: ["Citroën", "Peugeot", "DS Automobiles", "Opel / Vauxhall"], c: 3 },
+        { q: "將 VCI (診斷接頭) 連接至車輛後，如何確認 DIAGBOX 軟體已成功偵測到硬體？", a: ["軟體右上角的 VCI 圖示顯示為已連線狀態", "電腦螢幕會自動閃爍三次", "車輛防盜喇叭會響一聲", "系統會自動列印出診斷報告"], c: 0 },
+        { q: "在 DIAGBOX 系統中，手動輸入或自動讀取車輛 VIN 碼 (車身號碼) 的主要作用為何？", a: ["計算本次維修的工時費用", "讓系統準確識別車型與配備，載入專屬診斷模組", "解除車輛的引擎防盜鎖定", "查詢車主的保固與聯絡資訊"], c: 1 },
+        { q: "當診斷作業告一段落，若需保留目前的故障碼與全車掃描紀錄以供後續追蹤，標準做法是？", a: ["直接強制關閉 DIAGBOX 軟體", "直接拔除 VCI 傳輸線，系統會自動雲端備份", "將當前狀態儲存為 Trace/Session (診斷紀錄) 或匯出報告", "將診斷電腦重新開機"], c: 2 },
         { q: "在入口網站若要隱藏不常出現的車型以節省搜尋時間，應點擊？", a: ["Configuration du portail", "Menu Diagnostic", "Gestion Flash", "Aide"], c: 0 },
         { q: "若要顯示所有「被隱藏」的車型，應點擊入口網站的哪個按鈕？", a: ["Refresh", "Help", "...", "Home"], c: 2 },
         { q: "執行新車準備 (PVN) 或加裝附件 (如倒車顯影)，應選擇哪個選單？", a: ["Repair", "Fault finding", "Customer delivery", "Servicing"], c: 2 },
@@ -97,8 +96,6 @@
         { q: "針對「同一個」未解決的問題，應如何發送 DID-A 以獲得優先處理？", a: ["建立大量新檔案", "開啟「補充 (Supplement)」案件", "改寄電子郵件", "透過傳真申請"], c: 1 },
         { q: "若遇到「診斷工具啟用/註冊 (Activation)」問題，求助管道為何？", a: ["DIAGBOX 內的 Report 標籤", "透過 Service Box 請求協助", "ISolve 系統", "重新開機即可"], c: 1 },
         { q: "為維持工具最佳效能，技師在「每天結束工作時」應？", a: ["保持待機", "關閉電腦電源", "持續充電", "保持螢幕常亮"], c: 1 },
-        { q: "診斷電腦對於「第三方軟體」的安裝規範為何？", a: ["可以自由安裝", "僅能安裝 Stellantis 核准的軟體", "只要不影響效能即可安裝", "無任何限制"], c: 1 }
-    ];
 
     let state = {
         dealer: "", name: "", currentQ: 0, score: 0,
